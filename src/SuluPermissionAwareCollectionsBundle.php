@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle;
+
 use Sulu\Component\HttpKernel\SuluKernel;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
