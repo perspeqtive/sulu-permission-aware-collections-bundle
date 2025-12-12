@@ -1,0 +1,23 @@
+{
+  "name": "perspeqtive/sulu-permission-aware-collections-bundle",
+  "autoload": {
+    "psr-4": {
+      "PERSPEQTIVE\\SuluPermissionAwareCollectionsBundle\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "PERSPEQTIVE GmbH"
+    }
+  ],
+  "require": {
+    "php": "^8.2",
+    "sulu/sulu": "^2.6",
+    "jackalope/jackalope-doctrine-dbal": "^1.10 || ^2.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}

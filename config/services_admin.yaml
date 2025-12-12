@@ -1,0 +1,21 @@
+services:
+  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository:
+    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository
+    decorates: 'sulu_media.collection_repository'
+    public: true
+    factory: [ '@doctrine.orm.entity_manager', 'getRepository' ]
+    arguments:
+      - '%sulu_media.collection_entity%'
+    calls:
+      - [ 'setAccessControlQueryEnhancer', [ '@sulu_security.access_control_query_enhancer' ] ]
+      - [ 'setSecurity', [ '@security.helper' ] ]
+    tags:
+      - { name: 'sulu_security.access_control_descendant_provider' }
+
+  Sulu\Bundle\MediaBundle\Entity\CollectionRepository:
+    alias: 'PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository'
+
+  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener:
+    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener
+    tags:
+      - { name: doctrine.event_listener, event: loadClassMetadata }

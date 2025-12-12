@@ -1,0 +1,137 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository;
+
+use Doctrine\ORM\NoResultException;
+use Doctrine\ORM\QueryBuilder;
+use Sulu\Bundle\MediaBundle\Entity\Collection;
+use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
+use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
+use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancer;
+use Symfony\Bundle\SecurityBundle\Security;
+
+class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRepository
+{
+
+    private AccessControlQueryEnhancer $accessControlQueryEnhancer;
+    private Security $security;
+
+    public function createQueryBuilder($alias, $indexBy = null): QueryBuilder {
+
+        $queryBuilder = parent::createQueryBuilder($alias, $indexBy);
+
+        $this->accessControlQueryEnhancer->enhance(
+            $queryBuilder,
+            $this->security->getUser(),
+            64,
+            Collection::class,
+            'collection'
+        );
+
+        return $queryBuilder;
+    }
+    protected function getQueryBuilder(): QueryBuilder
+    {
+        $queryBuilder = parent::getQueryBuilder();
+
+        $this->accessControlQueryEnhancer->enhance(
+            $queryBuilder,
+            $this->security->getUser(),
+            64,
+            Collection::class,
+            'collection'
+        );
+
+        return $queryBuilder;
+    }
+
+    public function setAccessControlQueryEnhancer(AccessControlQueryEnhancer $accessControlQueryEnhancer): void
+    {
+        parent::setAccessControlQueryEnhancer($accessControlQueryEnhancer);
+        $this->accessControlQueryEnhancer = $accessControlQueryEnhancer;
+    }
+
+    public function setSecurity(Security $security): void {
+        $this->security = $security;
+    }
+
+    public function countMedia(CollectionInterface $collection): int
+    {
+        if (!$collection->getId()) {
+            throw new \InvalidArgumentException();
+        }
+
+        $queryBuilder = $this->createQueryBuilder('collection')
+            ->select('COUNT(collectionMedia.id)')
+            ->leftJoin('collection.media', 'collectionMedia')
+            ->andWhere('collection.id = :id')
+            ->setParameter('id', $collection->getId());
+
+        /** @var numeric-string $value */
+        $value = $queryBuilder->getQuery()->getSingleScalarResult();
+
+        return \intval($value);
+    }
+
+    public function countSubCollections(CollectionInterface $collection): int
+    {
+        if (!$collection->getId()) {
+            throw new \InvalidArgumentException();
+        }
+
+        $queryBuilder = $this->createQueryBuilder('collection')
+            ->select('COUNT(subCollections.id)')
+            ->leftJoin('collection.children', 'subCollections')
+            ->andWhere('collection.id = :id')
+            ->setParameter('id', $collection->getId());
+
+        /** @var numeric-string $value */
+        $value = $queryBuilder->getQuery()->getSingleScalarResult();
+
+        return \intval($value);
+    }
+
+    public function findCollectionByKey($key): ?CollectionInterface
+    {
+        $queryBuilder = $this->createQueryBuilder('collection')
+            ->leftJoin('collection.meta', 'collectionMeta')
+            ->leftJoin('collection.defaultMeta', 'defaultMeta')
+            ->andWhere('collection.key = :key');
+
+        $query = $queryBuilder->getQuery();
+        $query->setParameter('key', $key);
+
+        try {
+            return $query->getSingleResult();
+        } catch (NoResultException) {}
+        return null;
+    }
+
+    public function findCollectionTypeById($id): ?string
+    {
+        $queryBuilder = $this->createQueryBuilder('collection')
+            ->select('collectionType.key')
+            ->leftJoin('collection.type', 'collectionType')
+            ->andWhere('collection.id = :id')
+            ->setParameter('id', $id);
+
+        return $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    public function findIdByMediaId(int $mediaId): ?int
+    {
+        $queryBuilder = $this->_em->createQueryBuilder()
+            ->from(MediaInterface::class, 'media')
+            ->select('IDENTITY(media.collection)')
+            ->andWhere('media.id = :mediaId')
+            ->setParameter('mediaId', $mediaId);
+
+        try {
+            return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+        } catch (NoResultException $e) {
+            return null;
+        }
+    }
+}
