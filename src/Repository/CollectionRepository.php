@@ -6,6 +6,7 @@ namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository;
 
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
+use PERSPEQTIVE\SuluSnippetManagerBundle\Security\PermissionTypes;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
 use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
@@ -17,6 +18,7 @@ class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRep
 
     private AccessControlQueryEnhancer $accessControlQueryEnhancer;
     private Security $security;
+    private array $permissions = [];
 
     public function createQueryBuilder($alias, $indexBy = null): QueryBuilder {
 
@@ -25,7 +27,7 @@ class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRep
         $this->accessControlQueryEnhancer->enhance(
             $queryBuilder,
             $this->security->getUser(),
-            64,
+            $this->permissions[PermissionTypes::VIEW],
             Collection::class,
             'collection'
         );
@@ -39,7 +41,7 @@ class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRep
         $this->accessControlQueryEnhancer->enhance(
             $queryBuilder,
             $this->security->getUser(),
-            64,
+            $this->permissions[PermissionTypes::VIEW],
             Collection::class,
             'collection'
         );
@@ -55,6 +57,10 @@ class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRep
 
     public function setSecurity(Security $security): void {
         $this->security = $security;
+    }
+
+    public function setPermissions(array $permissions): void {
+        $this->permissions = $permissions;
     }
 
     public function countMedia(CollectionInterface $collection): int

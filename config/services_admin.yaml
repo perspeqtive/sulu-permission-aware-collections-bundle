@@ -9,6 +9,7 @@ services:
     calls:
       - [ 'setAccessControlQueryEnhancer', [ '@sulu_security.access_control_query_enhancer' ] ]
       - [ 'setSecurity', [ '@security.helper' ] ]
+      - [ 'setPermissions', [ '%sulu_security.permissions%' ] ]
     tags:
       - { name: 'sulu_security.access_control_descendant_provider' }
 
