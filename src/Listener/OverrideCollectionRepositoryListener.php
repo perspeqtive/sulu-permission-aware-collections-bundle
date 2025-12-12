@@ -6,8 +6,8 @@ namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener;
 
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
-use Sulu\Bundle\MediaBundle\Entity\CollectionRepository;
 
 class OverrideCollectionRepositoryListener
 {
