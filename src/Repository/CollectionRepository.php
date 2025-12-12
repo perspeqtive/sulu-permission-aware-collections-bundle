@@ -6,11 +6,11 @@ namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository;
 
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
-use PERSPEQTIVE\SuluSnippetManagerBundle\Security\PermissionTypes;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
 use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
 use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancer;
+use Sulu\Component\Security\Authorization\PermissionTypes;
 use Symfony\Bundle\SecurityBundle\Security;
 
 class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRepository
