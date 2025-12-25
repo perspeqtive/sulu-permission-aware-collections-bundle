@@ -8,12 +8,13 @@ use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
+use Sulu\Bundle\MediaBundle\Entity\CollectionRepository as BaseCollectionRepository;
 use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
 use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancerInterface;
 use Sulu\Component\Security\Authorization\PermissionTypes;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRepository
+class CollectionRepository extends BaseCollectionRepository
 {
 
     private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer;
