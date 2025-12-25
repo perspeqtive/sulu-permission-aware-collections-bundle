@@ -9,14 +9,14 @@ use Doctrine\ORM\QueryBuilder;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
 use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
-use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancer;
+use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancerInterface;
 use Sulu\Component\Security\Authorization\PermissionTypes;
 use Symfony\Bundle\SecurityBundle\Security;
 
 class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRepository
 {
 
-    private AccessControlQueryEnhancer $accessControlQueryEnhancer;
+    private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer;
     private Security $security;
     private array $permissions = [];
 
@@ -49,7 +49,7 @@ class CollectionRepository extends \Sulu\Bundle\MediaBundle\Entity\CollectionRep
         return $queryBuilder;
     }
 
-    public function setAccessControlQueryEnhancer(AccessControlQueryEnhancer $accessControlQueryEnhancer): void
+    public function setAccessControlQueryEnhancer(AccessControlQueryEnhancerInterface $accessControlQueryEnhancer): void
     {
         parent::setAccessControlQueryEnhancer($accessControlQueryEnhancer);
         $this->accessControlQueryEnhancer = $accessControlQueryEnhancer;
