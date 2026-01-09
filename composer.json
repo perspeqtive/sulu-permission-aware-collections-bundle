@@ -13,11 +13,18 @@
   "require": {
     "php": "^8.2",
     "sulu/sulu": "^2.6",
+    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "*@dev",
     "jackalope/jackalope-doctrine-dbal": "^1.10 || ^2.0"
   },
   "config": {
     "allow-plugins": {
       "php-http/discovery": true
+    }
+  },
+  "repositories": {
+    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": {
+      "type": "vcs",
+      "url": "https://github.com/perspeqtive/sulu-access-control-custom-query-enhancer-bundle.git"
     }
   }
 }
