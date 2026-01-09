@@ -22,6 +22,8 @@ services:
       $accessControlQueryEnhancer: '@sulu_security.access_control_query_enhancer'
       $entityManager: '@doctrine.orm.entity_manager'
       $systemStore: '@sulu_security.system_store'
+    tags:
+      - { name: perspeqtive_sulu_access_control_custom_query_enhancer.query_enhancer }
 
   PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener:
     class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener
