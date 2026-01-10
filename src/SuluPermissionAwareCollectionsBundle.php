@@ -16,7 +16,7 @@ class SuluPermissionAwareCollectionsBundle extends AbstractBundle
         if ($builder->hasParameter('sulu.context') !== true) {
             return;
         }
-        if($builder->getParameter('sulu.context') !== SuluKernel::CONTEXT_ADMIN) {
+        if ($builder->getParameter('sulu.context') !== SuluKernel::CONTEXT_ADMIN) {
             return;
         }
         $container->import(__DIR__ . '/../config/services_admin.yaml');

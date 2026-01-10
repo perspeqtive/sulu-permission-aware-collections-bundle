@@ -6,6 +6,7 @@ namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository;
 
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
+use InvalidArgumentException;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
 use Sulu\Bundle\MediaBundle\Entity\CollectionRepository as BaseCollectionRepository;
@@ -16,13 +17,12 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class CollectionRepository extends BaseCollectionRepository
 {
-
     private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer;
     private Security $security;
     private array $permissions = [];
 
-    public function createQueryBuilder($alias, $indexBy = null): QueryBuilder {
-
+    public function createQueryBuilder($alias, $indexBy = null): QueryBuilder
+    {
         $queryBuilder = parent::createQueryBuilder($alias, $indexBy);
 
         $this->accessControlQueryEnhancer->enhance(
@@ -30,11 +30,12 @@ class CollectionRepository extends BaseCollectionRepository
             $this->security->getUser(),
             $this->permissions[PermissionTypes::VIEW],
             Collection::class,
-            'collection'
+            'collection',
         );
 
         return $queryBuilder;
     }
+
     protected function getQueryBuilder(): QueryBuilder
     {
         $queryBuilder = parent::getQueryBuilder();
@@ -44,7 +45,7 @@ class CollectionRepository extends BaseCollectionRepository
             $this->security->getUser(),
             $this->permissions[PermissionTypes::VIEW],
             Collection::class,
-            'collection'
+            'collection',
         );
 
         return $queryBuilder;
@@ -56,18 +57,20 @@ class CollectionRepository extends BaseCollectionRepository
         $this->accessControlQueryEnhancer = $accessControlQueryEnhancer;
     }
 
-    public function setSecurity(Security $security): void {
+    public function setSecurity(Security $security): void
+    {
         $this->security = $security;
     }
 
-    public function setPermissions(array $permissions): void {
+    public function setPermissions(array $permissions): void
+    {
         $this->permissions = $permissions;
     }
 
     public function countMedia(CollectionInterface $collection): int
     {
         if (!$collection->getId()) {
-            throw new \InvalidArgumentException();
+            throw new InvalidArgumentException();
         }
 
         $queryBuilder = $this->createQueryBuilder('collection')
@@ -79,13 +82,13 @@ class CollectionRepository extends BaseCollectionRepository
         /** @var numeric-string $value */
         $value = $queryBuilder->getQuery()->getSingleScalarResult();
 
-        return \intval($value);
+        return (int) $value;
     }
 
     public function countSubCollections(CollectionInterface $collection): int
     {
         if (!$collection->getId()) {
-            throw new \InvalidArgumentException();
+            throw new InvalidArgumentException();
         }
 
         $queryBuilder = $this->createQueryBuilder('collection')
@@ -97,7 +100,7 @@ class CollectionRepository extends BaseCollectionRepository
         /** @var numeric-string $value */
         $value = $queryBuilder->getQuery()->getSingleScalarResult();
 
-        return \intval($value);
+        return (int) $value;
     }
 
     public function findCollectionByKey($key): ?CollectionInterface
@@ -112,7 +115,9 @@ class CollectionRepository extends BaseCollectionRepository
 
         try {
             return $query->getSingleResult();
-        } catch (NoResultException) {}
+        } catch (NoResultException) {
+        }
+
         return null;
     }
 

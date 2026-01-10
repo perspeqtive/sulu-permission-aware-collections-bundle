@@ -13,14 +13,17 @@ use Sulu\Bundle\SecurityBundle\Entity\AccessControl;
 use Sulu\Bundle\SecurityBundle\System\SystemStore;
 use Sulu\Component\Security\Authentication\UserInterface;
 
+use function array_column;
+use function count;
 use function in_array;
+use function sprintf;
 
 readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnhancerInterface
 {
     public function __construct(
         private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer,
         private EntityManagerInterface $entityManager,
-        private SystemStore $systemStore
+        private SystemStore $systemStore,
     ) {
     }
 
@@ -33,7 +36,7 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
         }
 
         if ($this->isAdminUser($user) === true) {
-            //   return;
+            return;
         }
 
         $this->overwriteLegacy($queryBuilder, $user, $permission, $entityClass, $entityAlias);
@@ -82,8 +85,8 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
         $result = $notAllowedItemsQueryBuilder->getQuery()->getScalarResult();
         $ids = array_column($result, 'id');
 
-        if (\count($ids) > 0) {
-            $queryBuilder->andWhere(\sprintf('%s.id NOT IN (:accessControlIds)', $entityAlias));
+        if (count($ids) > 0) {
+            $queryBuilder->andWhere(sprintf('%s.id NOT IN (:accessControlIds)', $entityAlias));
             $queryBuilder->setParameter('accessControlIds', $ids);
         }
     }
@@ -117,18 +120,19 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
                 AccessControl::class,
                 'accessControl',
                 'WITH',
-                'accessControl.entityIdInteger = allowedEntity.id AND accessControl.entityClass = :entityClass'
+                'accessControl.entityIdInteger = allowedEntity.id AND accessControl.entityClass = :entityClass',
             )
             ->where(
                 $subQueryBuilder->expr()->orX(
                     $subQueryBuilder->expr()->andX(
                         'accessControl.role IN (:roleIds)',
-                        'BIT_AND(accessControl.permissions, :permission) = :permission'
+                        'BIT_AND(accessControl.permissions, :permission) = :permission',
                     ),
-                    'accessControl.id IS NULL'
-                )
+                    'accessControl.id IS NULL',
+                ),
             );
         $subQueryBuilder->andWhere('allowedEntity.id = e.id');
+
         return $subQueryBuilder;
     }
 
@@ -140,12 +144,13 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
 
         $notAllowedItemsQueryBuilder->where(
             $notAllowedItemsQueryBuilder->expr()->not(
-                $notAllowedItemsQueryBuilder->expr()->exists($subQueryBuilder->getDQL())
-            )
+                $notAllowedItemsQueryBuilder->expr()->exists($subQueryBuilder->getDQL()),
+            ),
         );
         $notAllowedItemsQueryBuilder->setParameter('entityClass', $entityClass)
             ->setParameter('roleIds', $this->getUserRoleIds($user))
             ->setParameter('permission', $permission);
+
         return $notAllowedItemsQueryBuilder;
     }
 }
