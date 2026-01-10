@@ -33,10 +33,10 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
         }
 
         if ($this->isAdminUser($user) === true) {
-            return;
+            //   return;
         }
 
-        $this->overwriteLegacy();
+        $this->overwriteLegacy($queryBuilder, $user, $permission, $entityClass, $entityAlias);
     }
 
     public function enhanceWithDynamicEntityClass(QueryBuilder $queryBuilder, ?UserInterface $user, int $permission, string $entityClass, string $entityAlias, string $entityClassField, string $entityIdField): void
@@ -74,36 +74,12 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
         return false;
     }
 
-    private function overwriteLegacy(QueryBuilder $queryBuilder, ?UserInterface $user, int $permission, string $entityClass, string $entityAlias, string $entityClassField, string $entityIdField): void
+    private function overwriteLegacy(QueryBuilder $queryBuilder, ?UserInterface $user, int $permission, string $entityClass, string $entityAlias): void
     {
-        $qb = $this->entityManager->createQueryBuilder();
+        $subQueryBuilder = $this->getAllowedItemsDql($entityClass);
+        $notAllowedItemsQueryBuilder = $this->getNotAllowedQueryBuilder($entityClass, $subQueryBuilder, $user, $permission);
 
-        $qb->select('collection.id')
-            ->from($entityClass, 'collection');
-
-        $subQb = $this->entityManager->createQueryBuilder();
-        $subQb->select('1')
-            ->from(AccessControl::class, 'accessControl')
-            ->innerJoin('accessControl.role', 'role')
-            ->where('accessControl.entityIdInteger = collection.id');
-
-        if ($entityClassField) {
-            $subQb->andWhere('accessControl.entityClass = collection.' . $entityClassField);
-        } else {
-            $subQb->andWhere('accessControl.entityClass = :entityClass')
-                ->setParameter('entityClass', $entityClass);
-        }
-
-        $subQb->andWhere('role.id IN (:roleIds)')
-            ->andWhere('(BIT_AND(accessControl.permissions, :permission) = :permission)')
-            ->setParameter('roleIds', $this->getUserRoleIds($user))
-            ->setParameter('permission', $permission);
-
-        $qb->andWhere($qb->expr()->not(
-            $qb->expr()->exists($subQb->getDQL())
-        ));
-
-        $result = $qb->getQuery()->getScalarResult();
+        $result = $notAllowedItemsQueryBuilder->getQuery()->getScalarResult();
         $ids = array_column($result, 'id');
 
         if (\count($ids) > 0) {
@@ -129,5 +105,47 @@ readonly class CollectionQueryEnhancer implements SpecificAccessControlQueryEnha
         $anonymousRole = $this->systemStore->getAnonymousRole();
 
         return $anonymousRole ? [$anonymousRole->getId()] : [];
+    }
+
+    private function getAllowedItemsDql(string $entityClass): QueryBuilder
+    {
+        $subQueryBuilder = $this->entityManager->createQueryBuilder();
+        $subQueryBuilder->select()
+            ->from($entityClass, 'allowedEntity')
+            ->addSelect('1')
+            ->leftJoin(
+                AccessControl::class,
+                'accessControl',
+                'WITH',
+                'accessControl.entityIdInteger = allowedEntity.id AND accessControl.entityClass = :entityClass'
+            )
+            ->where(
+                $subQueryBuilder->expr()->orX(
+                    $subQueryBuilder->expr()->andX(
+                        'accessControl.role IN (:roleIds)',
+                        'BIT_AND(accessControl.permissions, :permission) = :permission'
+                    ),
+                    'accessControl.id IS NULL'
+                )
+            );
+        $subQueryBuilder->andWhere('allowedEntity.id = e.id');
+        return $subQueryBuilder;
+    }
+
+    private function getNotAllowedQueryBuilder(string $entityClass, QueryBuilder $subQueryBuilder, ?UserInterface $user, int $permission): QueryBuilder
+    {
+        $notAllowedItemsQueryBuilder = $this->entityManager->createQueryBuilder();
+        $notAllowedItemsQueryBuilder->select('e.id')
+            ->from($entityClass, 'e');
+
+        $notAllowedItemsQueryBuilder->where(
+            $notAllowedItemsQueryBuilder->expr()->not(
+                $notAllowedItemsQueryBuilder->expr()->exists($subQueryBuilder->getDQL())
+            )
+        );
+        $notAllowedItemsQueryBuilder->setParameter('entityClass', $entityClass)
+            ->setParameter('roleIds', $this->getUserRoleIds($user))
+            ->setParameter('permission', $permission);
+        return $notAllowedItemsQueryBuilder;
     }
 }
