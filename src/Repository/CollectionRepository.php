@@ -47,21 +47,6 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         return $queryBuilder;
     }
 
-    protected function getQueryBuilder(): QueryBuilder
-    {
-        $queryBuilder = parent::getQueryBuilder();
-
-        $this->accessControlQueryEnhancer->enhance(
-            $queryBuilder,
-            $this->security->getUser(),
-            $this->permissions[PermissionTypes::VIEW],
-            Collection::class,
-            'collection',
-        );
-
-        return $queryBuilder;
-    }
-
     public function setAccessControlQueryEnhancer(AccessControlQueryEnhancerInterface $accessControlQueryEnhancer): void
     {
         $this->accessControlQueryEnhancer = $accessControlQueryEnhancer;
@@ -165,18 +150,15 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
 
     public function countCollections($depth = 0, $filter = [], ?CollectionInterface $collection = null)
     {
-        $ids = $this->getIdsQuery($depth, $filter, [], $collection, 'DISTINCT collection.id')->getScalarResult();
-
         try {
+            $ids = $this->getIdsQuery($depth, $filter, [], $collection, 'DISTINCT collection.id')->getScalarResult();
             return \count($ids);
-        } catch (NoResultException $e) {
-            return;
-        }
+        } catch (NoResultException) {}
     }
 
-    public function countMedia(CollectionInterface $collection)
+    public function countMedia(CollectionInterface $collection): int
     {
-        if (!$collection || !$collection->getId()) {
+        if (!$collection->getId()) {
             throw new \InvalidArgumentException();
         }
 
@@ -192,9 +174,9 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         return \intval($value);
     }
 
-    public function countSubCollections(CollectionInterface $collection)
+    public function countSubCollections(CollectionInterface $collection): int
     {
-        if (!$collection || !$collection->getId()) {
+        if (!$collection->getId()) {
             throw new \InvalidArgumentException();
         }
 
@@ -306,7 +288,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         }
     }
 
-    public function findTree($id, $locale)
+    public function findTree($id, $locale): array
     {
         $subQueryBuilder = $this->createQueryBuilder('subCollection')
             ->select('subCollection.id')
@@ -332,7 +314,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         return $queryBuilder->getQuery()->getResult();
     }
 
-    public function findCollectionTypeById($id)
+    public function findCollectionTypeById($id): string
     {
         $queryBuilder = $this->createQueryBuilder('collection')
             ->select('collectionType.key')
@@ -357,10 +339,10 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
      */
     private function getIdsQuery(
         $depth = 0,
-        $filter = [],
-        $sortBy = [],
+        array $filter = [],
+        array $sortBy = [],
         ?CollectionInterface $collection = null,
-        $select = 'collection.id'
+        string $select = 'collection.id'
     ) {
         $queryBuilder = $this->createQueryBuilder('collection')
             ->select($select)
@@ -436,7 +418,10 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         }
     }
 
-    public function findDescendantIdsById($id)
+    /**
+     * @return int[]
+     */
+    public function findDescendantIdsById($id): array
     {
         $queryBuilder = $this->createQueryBuilder('subCollection')
             ->select('subCollection.id')
