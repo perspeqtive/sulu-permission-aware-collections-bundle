@@ -16,15 +16,6 @@ services:
   Sulu\Bundle\MediaBundle\Entity\CollectionRepository:
     alias: 'PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository'
 
-  perspeqtive_sulu_permission_aware_collections.access_control_query_enhancer.collection_query_enhancer:
-    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\AccessControl\QueryEnhancer\CollectionQueryEnhancer
-    arguments:
-      $accessControlQueryEnhancer: '@sulu_security.access_control_query_enhancer'
-      $entityManager: '@doctrine.orm.entity_manager'
-      $systemStore: '@sulu_security.system_store'
-    tags:
-      - { name: perspeqtive_sulu_access_control_custom_query_enhancer.query_enhancer }
-
   PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener:
     class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener
     tags:
