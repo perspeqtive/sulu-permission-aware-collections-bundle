@@ -1,18 +1,27 @@
 services:
-  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository:
-    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository
-    decorates: 'sulu_media.collection_repository'
-    public: true
-    factory: [ '@doctrine.orm.entity_manager', 'getRepository' ]
+  perspeqtive.sulu_media.collection_metadata:
+    class: Doctrine\ORM\Mapping\ClassMetadata
+    factory: [ '@doctrine.orm.entity_manager', 'getClassMetadata' ]
     arguments:
       - '%sulu_media.collection_entity%'
-    calls:
-      - [ 'setAccessControlQueryEnhancer', [ '@sulu_security.access_control_query_enhancer' ] ]
-      - [ 'setSecurity', [ '@security.helper' ] ]
-      - [ 'setPermissions', [ '%sulu_security.permissions%' ] ]
+
+  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository:
+    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository
+    public: true
+    arguments:
+      - '@doctrine.orm.entity_manager'
+      - '@perspeqtive.sulu_media.collection_metadata'
+      - '@sulu_security.access_control_query_enhancer'
+      - '@security.helper'
+      - '%sulu_security.permissions%'
     tags:
       - { name: 'sulu_security.access_control_descendant_provider' }
 
+  # Alias, damit Sulu überall unsere Implementierung bekommt
+  sulu_media.collection_repository:
+    alias: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository
+
+  # Falls Sulu an manchen Stellen per DI auf die konkrete Klasse typed, diesen Alias beibehalten
   Sulu\Bundle\MediaBundle\Entity\CollectionRepository:
     alias: 'PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository'
 

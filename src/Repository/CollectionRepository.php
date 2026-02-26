@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
@@ -28,9 +30,15 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
 
     use SecuredEntityRepositoryTrait;
 
-    private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer;
-    private Security $security;
-    private array $permissions = [];
+    public function __construct(
+        EntityManagerInterface $em,
+        ClassMetadata $class,
+        private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer,
+        private Security $security,
+        private array $permissions
+    ) {
+        parent::__construct($em, $class);
+    }
 
     public function createQueryBuilder($alias, $indexBy = null): QueryBuilder
     {
@@ -45,21 +53,6 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         );
 
         return $queryBuilder;
-    }
-
-    public function setAccessControlQueryEnhancer(AccessControlQueryEnhancerInterface $accessControlQueryEnhancer): void
-    {
-        $this->accessControlQueryEnhancer = $accessControlQueryEnhancer;
-    }
-
-    public function setSecurity(Security $security): void
-    {
-        $this->security = $security;
-    }
-
-    public function setPermissions(array $permissions): void
-    {
-        $this->permissions = $permissions;
     }
 
     public function findCollectionById($id)
