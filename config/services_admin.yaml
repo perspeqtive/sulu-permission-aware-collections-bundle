@@ -1,4 +1,8 @@
 services:
+  _defaults:
+    autowire: false
+    autoconfigure: false
+
   perspeqtive.sulu_media.collection_metadata:
     class: Doctrine\ORM\Mapping\ClassMetadata
     factory: [ '@doctrine.orm.entity_manager', 'getClassMetadata' ]
