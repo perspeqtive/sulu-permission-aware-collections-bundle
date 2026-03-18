@@ -12,8 +12,8 @@ use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
+use InvalidArgumentException;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
-use Sulu\Bundle\MediaBundle\Entity\Collection as CollectionEntity;
 use Sulu\Bundle\MediaBundle\Entity\CollectionInterface;
 use Sulu\Bundle\MediaBundle\Entity\CollectionRepositoryInterface;
 use Sulu\Bundle\MediaBundle\Entity\MediaInterface;
@@ -25,17 +25,23 @@ use Sulu\Component\Security\Authorization\AccessControl\SecuredEntityRepositoryT
 use Sulu\Component\Security\Authorization\PermissionTypes;
 use Symfony\Bundle\SecurityBundle\Security;
 
+use function array_key_exists;
+use function array_map;
+use function count;
+use function is_array;
+use function sprintf;
+use function strtolower;
+
 class CollectionRepository extends NestedTreeRepository implements CollectionRepositoryInterface, DescendantProviderInterface
 {
-
     use SecuredEntityRepositoryTrait;
 
     public function __construct(
         EntityManagerInterface $em,
         ClassMetadata $class,
-        private AccessControlQueryEnhancerInterface $accessControlQueryEnhancer,
-        private Security $security,
-        private array $permissions
+        private readonly AccessControlQueryEnhancerInterface $accessControlQueryEnhancer,
+        private readonly Security $security,
+        private readonly array $permissions,
     ) {
         parent::__construct($em, $class);
     }
@@ -57,7 +63,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
 
     public function findCollectionById($id)
     {
-        $dql = \sprintf(
+        $dql = sprintf(
             'SELECT n, collectionMeta, defaultMeta, collectionType, collectionParent, parentMeta, collectionChildren
                  FROM %s AS n
                      LEFT JOIN n.meta AS collectionMeta
@@ -67,7 +73,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
                      LEFT JOIN n.children AS collectionChildren
                      LEFT JOIN collectionParent.meta AS parentMeta
                  WHERE n.id = :id',
-            $this->_entityName
+            $this->_entityName,
         );
 
         $query = new Query($this->_em);
@@ -75,7 +81,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         $query->setParameter('id', $id);
         $result = $query->getResult();
 
-        if (0 === \count($result)) {
+        if (0 === count($result)) {
             return null;
         }
 
@@ -88,7 +94,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         ?CollectionInterface $collection = null,
         $sortBy = [],
         ?UserInterface $user = null,
-        $permission = null
+        $permission = null,
     ) {
         $ids = $this->getIdsQuery($depth, $filter, $sortBy, $collection)->getScalarResult();
 
@@ -106,38 +112,38 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
             ->andWhere('collection.id IN (:ids)')
             ->setParameter('ids', $ids);
 
-        if (null !== $sortBy && \is_array($sortBy) && \count($sortBy) > 0) {
+        if (null !== $sortBy && is_array($sortBy) && count($sortBy) > 0) {
             foreach ($sortBy as $column => $order) {
                 $queryBuilder->addOrderBy(
                     'collectionMeta.' . $column,
-                    'asc' === \strtolower($order) ? 'ASC' : 'DESC'
+                    'asc' === strtolower($order) ? 'ASC' : 'DESC',
                 );
             }
         }
 
         $queryBuilder->addOrderBy('collection.id', 'ASC');
 
-        if (null != $permission) {
+        if (null !== $permission) {
             if ($this->accessControlQueryEnhancer) {
                 $this->accessControlQueryEnhancer->enhance(
                     $queryBuilder,
                     $user,
                     $permission,
-                    CollectionEntity::class,
-                    'collection'
+                    Collection::class,
+                    'collection',
                 );
             } else {
                 $this->addAccessControl(
                     $queryBuilder,
                     $user,
                     $permission,
-                    CollectionEntity::class,
-                    'collection'
+                    Collection::class,
+                    'collection',
                 );
             }
         }
 
-        /** @var CollectionEntity[] */
+        /** @var Collection[] */
         return $queryBuilder->getQuery()->getResult();
     }
 
@@ -145,14 +151,16 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
     {
         try {
             $ids = $this->getIdsQuery($depth, $filter, [], $collection, 'DISTINCT collection.id')->getScalarResult();
-            return \count($ids);
-        } catch (NoResultException) {}
+
+            return count($ids);
+        } catch (NoResultException) {
+        }
     }
 
     public function countMedia(CollectionInterface $collection): int
     {
         if (!$collection->getId()) {
-            throw new \InvalidArgumentException();
+            throw new InvalidArgumentException();
         }
 
         $queryBuilder = $this->createQueryBuilder('collection')
@@ -164,13 +172,13 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         /** @var numeric-string $value */
         $value = $queryBuilder->getQuery()->getSingleScalarResult();
 
-        return \intval($value);
+        return (int) $value;
     }
 
     public function countSubCollections(CollectionInterface $collection): int
     {
         if (!$collection->getId()) {
-            throw new \InvalidArgumentException();
+            throw new InvalidArgumentException();
         }
 
         $queryBuilder = $this->createQueryBuilder('collection')
@@ -182,15 +190,15 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         /** @var numeric-string $value */
         $value = $queryBuilder->getQuery()->getSingleScalarResult();
 
-        return \intval($value);
+        return (int) $value;
     }
 
     public function findCollections($filter = [], $limit = null, $offset = null, $sortBy = [])
     {
         list($parent, $depth, $search) = [
-            isset($filter['parent']) ? $filter['parent'] : null,
-            isset($filter['depth']) ? $filter['depth'] : null,
-            isset($filter['search']) ? $filter['search'] : null,
+            $filter['parent'] ?? null,
+            $filter['depth'] ?? null,
+            $filter['search'] ?? null,
         ];
 
         try {
@@ -206,9 +214,9 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
                 ->addSelect('parent')
                 ->addSelect('children');
 
-            if (null !== $sortBy && \is_array($sortBy) && \count($sortBy) > 0) {
+            if (is_array($sortBy) && count($sortBy) > 0) {
                 foreach ($sortBy as $column => $order) {
-                    $qb->addOrderBy('collectionMeta.' . $column, 'asc' === \strtolower($order) ? 'ASC' : 'DESC');
+                    $qb->addOrderBy('collectionMeta.' . $column, 'asc' === strtolower($order) ? 'ASC' : 'DESC');
                 }
             }
             $qb->addOrderBy('collection.id', 'ASC');
@@ -219,7 +227,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
             } elseif (null !== $depth) {
                 // the combination of depth and parent needs a bigger refactoring of this query.
                 $qb->andWhere('collection.depth <= :depth');
-                $qb->setParameter('depth', \intval($depth));
+                $qb->setParameter('depth', (int) $depth);
             }
             if (null !== $search) {
                 $qb->andWhere('collectionMeta.title LIKE :search');
@@ -242,7 +250,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
     public function findCollectionBreadcrumbById($id)
     {
         try {
-            $sql = \sprintf(
+            $sql = sprintf(
                 'SELECT n, collectionMeta, defaultMeta
                  FROM %s AS p,
                       %s AS n
@@ -251,7 +259,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
                  WHERE p.id = :id AND p.lft > n.lft AND p.rgt < n.rgt
                  ORDER BY n.lft',
                 $this->_entityName,
-                $this->_entityName
+                $this->_entityName,
             );
 
             $query = new Query($this->_em);
@@ -297,13 +305,13 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
             ->leftJoin('collection.defaultMeta', 'defaultMeta')
             ->innerJoin('collection.type', 'type')
             ->leftJoin('collection.parent', 'parent')
-            ->andWhere(\sprintf('parent.id IN (%s)', $subQueryBuilder->getDQL()))
+            ->andWhere(sprintf('parent.id IN (%s)', $subQueryBuilder->getDQL()))
             ->orWhere('parent.id is NULL')
             ->orderBy('collection.lft')
             ->setParameter('id', $id)
             ->setParameter('locale', $locale);
 
-        /** @var CollectionEntity[] */
+        /** @var Collection[] */
         return $queryBuilder->getQuery()->getResult();
     }
 
@@ -324,9 +332,6 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
      * set of parameters.
      *
      * @param int $depth
-     * @param array $filter
-     * @param array $sortBy
-     * @param string $select
      *
      * @return Query
      */
@@ -335,7 +340,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         array $filter = [],
         array $sortBy = [],
         ?CollectionInterface $collection = null,
-        string $select = 'collection.id'
+        string $select = 'collection.id',
     ) {
         $queryBuilder = $this->createQueryBuilder('collection')
             ->select($select)
@@ -351,45 +356,45 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
             $queryBuilder->setParameter('id', $collection->getId());
         }
 
-        if (\array_key_exists('search', $filter) && null !== $filter['search']
-            || \array_key_exists('locale', $filter)
-            || \count($sortBy) > 0
+        if (array_key_exists('search', $filter) && null !== $filter['search']
+            || array_key_exists('locale', $filter)
+            || count($sortBy) > 0
         ) {
             $queryBuilder->leftJoin('collection.meta', 'collectionMeta');
             $queryBuilder->leftJoin('collection.defaultMeta', 'defaultMeta');
         }
 
-        if (\array_key_exists('search', $filter) && null !== $filter['search']) {
+        if (array_key_exists('search', $filter) && null !== $filter['search']) {
             $queryBuilder->andWhere('collectionMeta.title LIKE :search OR defaultMeta.locale != :locale');
             $queryBuilder->setParameter('search', '%' . $filter['search'] . '%');
         }
 
-        if (\array_key_exists('locale', $filter)) {
+        if (array_key_exists('locale', $filter)) {
             $queryBuilder->andWhere('collectionMeta.locale = :locale OR defaultMeta.locale != :locale');
             $queryBuilder->setParameter('locale', $filter['locale']);
         }
 
-        if (\array_key_exists('systemCollections', $filter) && !$filter['systemCollections']) {
+        if (array_key_exists('systemCollections', $filter) && !$filter['systemCollections']) {
             $queryBuilder->leftJoin('collection.type', 'collectionType');
             $queryBuilder->andWhere('collectionType.key != :type');
             $queryBuilder->setParameter('type', SystemCollectionManagerInterface::COLLECTION_TYPE);
         }
 
-        if (\count($sortBy) > 0) {
+        if (count($sortBy) > 0) {
             foreach ($sortBy as $column => $order) {
                 $queryBuilder->addOrderBy(
                     'collectionMeta.' . $column,
-                    'asc' === \strtolower($order) ? 'ASC' : 'DESC'
+                    'asc' === strtolower($order) ? 'ASC' : 'DESC',
                 );
             }
         }
 
         $queryBuilder->addOrderBy('collection.id', 'ASC');
 
-        if (\array_key_exists('limit', $filter)) {
+        if (array_key_exists('limit', $filter)) {
             $queryBuilder->setMaxResults($filter['limit']);
         }
-        if (\array_key_exists('offset', $filter)) {
+        if (array_key_exists('offset', $filter)) {
             $queryBuilder->setFirstResult($filter['offset']);
         }
 
@@ -426,7 +431,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         /** @var array<array{id: numeric-string}> $result */
         $result = $queryBuilder->getQuery()->getScalarResult();
 
-        return \array_map(function($collection) {
+        return array_map(function ($collection) {
             return (int) $collection['id'];
         }, $result);
     }
@@ -445,7 +450,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
                 CollectionInterface::class,
                 $ancestorCollectionAlias,
                 Join::WITH,
-                $alias . '.lft > ' . $ancestorCollectionAlias . '.lft AND ' . $alias . '.rgt < ' . $ancestorCollectionAlias . '.rgt'
+                $alias . '.lft > ' . $ancestorCollectionAlias . '.lft AND ' . $alias . '.rgt < ' . $ancestorCollectionAlias . '.rgt',
             )
             ->andWhere($ancestorCollectionAlias . '.id = :id')
             ->setParameter('id', $ancestorId);
@@ -470,7 +475,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         string $alias,
         int $ancestorId,
         UserInterface $user,
-        int $permission
+        int $permission,
     ): QueryBuilder {
         $qb = $this->createDescendantCollectionsQueryBuilder($alias, $ancestorId);
 
@@ -478,8 +483,8 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
             $qb,
             $user,
             $permission,
-            CollectionEntity::class,
-            $alias
+            Collection::class,
+            $alias,
         );
 
         return $qb;
@@ -489,7 +494,7 @@ class CollectionRepository extends NestedTreeRepository implements CollectionRep
         string $alias,
         int $ancestorId,
         UserInterface $user,
-        int $permission
+        int $permission,
     ): QueryBuilder {
         $qb = $this->createDescendantCollectionsQueryBuilder($alias, $ancestorId);
 

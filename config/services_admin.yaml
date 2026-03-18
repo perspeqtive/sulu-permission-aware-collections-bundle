@@ -21,15 +21,14 @@ services:
     tags:
       - { name: 'sulu_security.access_control_descendant_provider' }
 
-  # Alias, damit Sulu überall unsere Implementierung bekommt
-  sulu_media.collection_repository:
-    alias: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository
+  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CombinedCollectionRepository:
+    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CombinedCollectionRepository
+    arguments:
+      $security: '@security.helper'
+      $requestStack: '@request_stack'
+      $permissionAwareCollectionRepository: '@PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository'
+      $mediaCollectionRepository: '@.inner'
+    decorates: sulu_media.collection_repository
 
-  # Falls Sulu an manchen Stellen per DI auf die konkrete Klasse typed, diesen Alias beibehalten
   Sulu\Bundle\MediaBundle\Entity\CollectionRepository:
-    alias: 'PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CollectionRepository'
-
-  PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener:
-    class: PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Listener\OverrideCollectionRepositoryListener
-    tags:
-      - { name: doctrine.event_listener, event: loadClassMetadata }
+    alias: 'PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\Repository\CombinedCollectionRepository'
