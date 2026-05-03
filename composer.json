@@ -13,7 +13,7 @@
   "require": {
     "php": "^8.2",
     "sulu/sulu": "^2.6",
-    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "*@dev"
+    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "^1.0"
     },
     "require-dev": {
       "phpunit/phpunit": "^12",
