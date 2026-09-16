@@ -10,8 +10,11 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 class SuluPermissionAwareCollectionsBundle extends AbstractBundle
 {
-    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
+    /**
+     * @param array<string, mixed> $config
+     */
+    public function loadExtension(array $config, ContainerConfigurator $configurator, ContainerBuilder $container): void
     {
-        $container->import(__DIR__ . '/../config/services_admin.yaml');
+        $configurator->import(__DIR__ . '/../config/services_admin.yaml');
     }
 }

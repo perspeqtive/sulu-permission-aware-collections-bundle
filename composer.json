@@ -1,28 +1,45 @@
 {
   "name": "perspeqtive/sulu-permission-aware-collections-bundle",
+  "description": "Applies Sulu access control permissions to media collections in the Sulu admin",
+  "type": "sulu-bundle",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "PERSPEQTIVE GmbH",
+      "email": "mail@perspeqtive.de"
+    }
+  ],
+  "keywords": [
+    "sulu",
+    "media",
+    "collections",
+    "permissions",
+    "acl"
+  ],
+  "require": {
+    "php": "^8.2",
+    "doctrine/orm": "^3.3",
+    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "^3.0",
+    "sulu/sulu": "^3.0",
+    "ext-simplexml": "*"
+  },
+  "require-dev": {
+    "php-cs-fixer/shim": "^3.75",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/phpstan-phpunit": "^2.0",
+    "phpstan/phpstan-symfony": "^2.0",
+    "phpunit/phpunit": "^12"
+  },
   "autoload": {
     "psr-4": {
       "PERSPEQTIVE\\SuluPermissionAwareCollectionsBundle\\": "src/"
     }
   },
-  "authors": [
-    {
-      "name": "PERSPEQTIVE GmbH"
+  "autoload-dev": {
+    "psr-4": {
+      "PERSPEQTIVE\\SuluPermissionAwareCollectionsBundle\\Tests\\": "tests/"
     }
-  ],
-  "require": {
-    "php": "^8.2",
-    "sulu/sulu": "^2.6",
-    "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "^1.0"
-    },
-    "require-dev": {
-      "phpunit/phpunit": "^12",
-      "jackalope/jackalope-doctrine-dbal": "^1.3.4 || ^2.0",
-      "php-cs-fixer/shim": "^3.75",
-      "phpstan/phpstan": "^2.1",
-      "phpstan/phpstan-phpunit": "^2.0",
-      "phpstan/phpstan-symfony": "^2.0"
-    },
+  },
   "config": {
     "allow-plugins": {
       "php-http/discovery": true

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 $finder = (new PhpCsFixer\Finder())
-    ->in([__DIR__ . '/src', __DIR__ . '/tests'])
+    ->in(array_filter([__DIR__ . '/src', __DIR__ . '/tests'], 'is_dir'))
     ->ignoreVCSIgnored(true)
     ->notName('bundles.php');
 
