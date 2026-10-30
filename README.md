@@ -18,45 +18,8 @@ the ones being applied.
 - Only active inside the `admin` firewall, the website is served by Sulu's own repository
 - Registers as access control descendant provider, so permissions keep being inherited to sub
   collections
-- Honours a custom enhancer registered through the
-  [Sulu Access Control Custom Query Enhancer Bundle](https://github.com/perspeqtive/sulu-access-control-custom-query-enhancer-bundle)
-- No core patching — the bundle decorates `sulu_media.collection_repository`
-
-## 📋 Requirements
-
-| Requirement                                                     | Version   |
-|:----------------------------------------------------------------|:----------|
-| PHP                                                             | `^8.2`    |
-| Sulu                                                            | `^3.0.11` |
-| Doctrine ORM                                                    | `^3.3`    |
-| `perspeqtive/sulu-access-control-custom-query-enhancer-bundle`  | `^3.0`    |
-
-Sulu `3.0.11` is the first release whose `AccessControlQueryEnhancerInterface` carries the
-`$entityIdField` parameter and whose services request the interface instead of Sulu's concrete
-enhancer. The bundle relies on both, so earlier Sulu 3 releases are not supported.
-
-Sulu 3 still allows Doctrine ORM 2, this bundle does not: it extends Doctrine's `QueryBuilder`, whose
-signatures changed with ORM 3. Make sure your project is not pinned to `doctrine/orm: ^2`.
 
 ## 🛠️ Installation
-
-Neither this bundle nor the access control enhancer bundle is published on Packagist, so add both
-repositories to your project's `composer.json` first:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/perspeqtive/sulu-permission-aware-collections-bundle.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/perspeqtive/sulu-access-control-custom-query-enhancer-bundle.git"
-        }
-    ]
-}
-```
 
 ### Install the bundle via Composer:
 
@@ -125,12 +88,3 @@ because those carry their own access control records, not because the query walk
 | `AppendOnlyWhereQueryBuilder`      | Keeps that restriction in place when Sulu's repository sets its own condition through `where()`                                        |
 | `SingleRestrictionQueryEnhancer`   | Makes sure a query builder is restricted only once - Sulu names the aliases of its restriction statically, so a query carrying it twice is rejected by Doctrine |
 
-## ⬆️ Upgrade from 1.x to 2.x (Sulu 3)
-
-The public interface of the bundle did not change: service ids, class names, the decoration of
-`sulu_media.collection_repository` and the bundle registration stay the same, and there is still no
-configuration. Projects only need to update their constraints (Sulu has to be at least `3.0.11`):
-
-```bash
-composer require perspeqtive/sulu-permission-aware-collections-bundle:^2.0
-```
