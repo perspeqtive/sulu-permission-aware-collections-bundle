@@ -20,7 +20,7 @@
     "php": "^8.2",
     "doctrine/orm": "^3.3",
     "perspeqtive/sulu-access-control-custom-query-enhancer-bundle": "^3.0",
-    "sulu/sulu": "^3.0",
+    "sulu/sulu": "^3.0.11",
     "ext-simplexml": "*"
   },
   "require-dev": {

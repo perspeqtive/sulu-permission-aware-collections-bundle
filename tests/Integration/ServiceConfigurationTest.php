@@ -11,8 +11,7 @@ use PERSPEQTIVE\SuluPermissionAwareCollectionsBundle\SuluPermissionAwareCollecti
 use PHPUnit\Framework\TestCase;
 use Sulu\Bundle\MediaBundle\Entity\Collection;
 use Sulu\Bundle\MediaBundle\Entity\CollectionRepository as SuluCollectionRepository;
-use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancer;
-use Sulu\Bundle\SecurityBundle\System\SystemStoreInterface;
+use Sulu\Bundle\SecurityBundle\AccessControl\AccessControlQueryEnhancerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Compiler\CheckTypeDeclarationsPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
@@ -118,13 +117,10 @@ class ServiceConfigurationTest extends TestCase
             ->setPublic(true)
             ->setArguments([new Reference('service_container')]);
         $container->register('request_stack', RequestStack::class)->setPublic(true);
-        $container->register('sulu_security.system_store', SystemStoreInterface::class)->setPublic(true);
-        $container->register('sulu_security.access_control_query_enhancer', AccessControlQueryEnhancer::class)
-            ->setPublic(true)
-            ->setArguments([
-                new Reference('sulu_security.system_store'),
-                new Reference('doctrine.orm.entity_manager'),
-            ]);
+        // registered by its interface only: the bundle must not rely on Sulu's concrete enhancer, so
+        // a decorator such as the one of the custom query enhancer bundle can take its place
+        $container->register('sulu_security.access_control_query_enhancer', AccessControlQueryEnhancerInterface::class)
+            ->setPublic(true);
         $container->register('sulu_media.collection_repository', SuluCollectionRepository::class)
             ->setPublic(true)
             ->setArguments(['%sulu_media.collection_entity%'])

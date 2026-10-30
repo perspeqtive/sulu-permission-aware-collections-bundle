@@ -24,12 +24,16 @@ the ones being applied.
 
 ## 📋 Requirements
 
-| Requirement                                                     | Version |
-|:----------------------------------------------------------------|:--------|
-| PHP                                                             | `^8.2`  |
-| Sulu                                                            | `^3.0`  |
-| Doctrine ORM                                                    | `^3.3`  |
-| `perspeqtive/sulu-access-control-custom-query-enhancer-bundle`  | `^3.0`  |
+| Requirement                                                     | Version   |
+|:----------------------------------------------------------------|:----------|
+| PHP                                                             | `^8.2`    |
+| Sulu                                                            | `^3.0.11` |
+| Doctrine ORM                                                    | `^3.3`    |
+| `perspeqtive/sulu-access-control-custom-query-enhancer-bundle`  | `^3.0`    |
+
+Sulu `3.0.11` is the first release whose `AccessControlQueryEnhancerInterface` carries the
+`$entityIdField` parameter and whose services request the interface instead of Sulu's concrete
+enhancer. The bundle relies on both, so earlier Sulu 3 releases are not supported.
 
 Sulu 3 still allows Doctrine ORM 2, this bundle does not: it extends Doctrine's `QueryBuilder`, whose
 signatures changed with ORM 3. Make sure your project is not pinned to `doctrine/orm: ^2`.
@@ -125,7 +129,7 @@ because those carry their own access control records, not because the query walk
 
 The public interface of the bundle did not change: service ids, class names, the decoration of
 `sulu_media.collection_repository` and the bundle registration stay the same, and there is still no
-configuration. Projects only need to update their constraints:
+configuration. Projects only need to update their constraints (Sulu has to be at least `3.0.11`):
 
 ```bash
 composer require perspeqtive/sulu-permission-aware-collections-bundle:^2.0
